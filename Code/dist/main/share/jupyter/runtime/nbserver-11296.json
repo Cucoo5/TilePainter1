@@ -1,0 +1,12 @@
+{
+  "base_url": "/",
+  "hostname": "localhost",
+  "notebook_dir": "E:\\gdrive backup\\Michael's Documents\\edX\\Harvard\\degrees\\degrees",
+  "password": false,
+  "pid": 11296,
+  "port": 8889,
+  "secure": false,
+  "sock": "",
+  "token": "03114b517d94ad3883350e9aa91d0e96e1af1c71d461908c",
+  "url": "http://localhost:8889/"
+}
