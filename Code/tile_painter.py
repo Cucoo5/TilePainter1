@@ -220,7 +220,7 @@ class tile_painter():
         Control Bindings
         '''
         self.BindCursorControl(self.TilePaletteCanvas)
-        self.BindCursorControl(self.TilePaintCanvas)
+        self.BindCursorControl(self.TilePaintCanvas,canvasid=True)
 
         self.BindTilePaletteControl()
 
@@ -597,12 +597,12 @@ class tile_painter():
     #CONTROL FUNCTIONS
     #=================
 
-    def BindCursorControl(self,widobj):
+    def BindCursorControl(self,widobj,canvasid=False):
         controllist=["<Motion>","<Enter>","<Leave>"]
         for binding in controllist:
-            widobj.bind(binding,lambda event, obj=widobj: self.CursorControl(event,obj))
+            widobj.bind(binding,lambda event, obj=widobj: self.CursorControl(event,obj,canvasid))
 
-    def CursorControl(self,event,obj):
+    def CursorControl(self,event,obj,canvasid):
         '''
         Consolidates Mouse Control Functions:
             - Motion
@@ -619,6 +619,12 @@ class tile_painter():
         coords=[(x,y),(x,y)] #single location coords
         bbox0=self.CursorRectangle(coords)[1]
 
+        currenttiles=self.TM.MultitileTool()
+        (ym,xm)=np.shape(currenttiles)
+
+        coords1=[(x,y),(x+xm-1,y+ym-1)] #multitile location coords
+        bbox1=self.CursorRectangle(coords1)[1]
+
         if str(event.type)=="Enter":
             '''
             Create cursor in current widget
@@ -627,6 +633,12 @@ class tile_painter():
             color0="white"
             Cursor0=obj.create_rectangle(bbox0,outline=color0,tags="Cursor0")
 
+            #Tile placement preview
+            if canvasid:
+                color1="red"
+                Cursor1=obj.create_rectangle(bbox1,outline=color1,width=2,tags="Cursor2")
+                obj.tag_raise("Cursor2")
+
 
         if str(event.type)=="Leave":
             '''
@@ -634,6 +646,7 @@ class tile_painter():
             '''
             try:
                 obj.delete("Cursor0")
+                obj.delete("Cursor2")
             except:
                 pass
 
@@ -643,6 +656,10 @@ class tile_painter():
             '''
             obj.coords("Cursor0",bbox0)
             obj.tag_raise("Cursor0")
+
+            if canvasid:
+                obj.coords("Cursor2",bbox1)
+                obj.tag_raise("Cursor2")
 
 
     def BindTilePaletteControl(self):
@@ -672,7 +689,7 @@ class tile_painter():
             bbox1=self.CursorRectangle(coords)[1]
 
             obj.coords("Cursor1",bbox1)
-            obj.tag_raise("cursor")
+            obj.tag_raise("Cursor1")
 
             (subymin,subxmin,subymax,subxmax)=self.CursorRectangle(coords)[0]
 
@@ -793,6 +810,14 @@ class tile_painter():
             ylim1=yi-ymax
             ylim2=yi+ymax
 
+            #tile placement preview
+            (ym,xm)=np.shape(currenttiles)
+
+            coords1=[(x,y),(x+xm-1,y+ym-1)] #multitile location coords
+            bbox1=self.CursorRectangle(coords1)[1]
+
+            obj.coords("Cursor2",bbox1)
+            obj.tag_raise("Cursor2")
 
 
             if (xn>=xlim1 and xn<=xlim2) and (yn>=ylim1 and yn<=ylim2):
