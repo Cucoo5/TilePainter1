@@ -11,6 +11,7 @@ from tile_painter import tile_painter
 
 def main():
     master = tk.Tk()
+    master.title("TilePainter")
     TM=Tile_Manager()
     tp=tile_painter(master,TM)
     master.mainloop()

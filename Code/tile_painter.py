@@ -72,12 +72,17 @@ class tile_painter():
         self.TPainStorage={} #dict of imgtag:[(x,y),imgtk,img_pil]
         #list of tiles will be in: tilelist=obj.find_withtag("tiles")
 
+        #tilepreviewstorage
+        tp_pil=self.TM.createtilepreview()
+        self.tpTk=PIL_ImageTk.PhotoImage(image=tp_pil)
+
         '''
         Initialize master image
         used in conjunction with canvas matrix to display tiles without
         needing individual tile objects
         Located in TM
         '''
+
 
 
 
@@ -97,7 +102,7 @@ class tile_painter():
         self.areaidspinboxOut=tk.IntVar()
         self.areaidspinboxOut.set(self.TM.areaid)
 
-        self.areaidspinboxWidget=self.SpinboxFunc(0,(np.shape(self.TM.MasterMatrix)[1]/16)-1,self.areaidspinboxOut,5)
+        self.areaidspinboxWidget=self.SpinboxFunc(0,(np.shape(self.TM.MasterMatrix)[1]/self.TM.tilesize)-1,self.areaidspinboxOut,5)
 
         self.areaidspinboxWidget.grid(row=1,column=0,sticky = 'W', pady = 2)
 
@@ -125,7 +130,7 @@ class tile_painter():
         '''
         Initialize Tile Palette Canvas
         '''
-        self.TilePaletteCanvas=self.CanvasFunc(width=256,height=256,background="grey")
+        self.TilePaletteCanvas=self.CanvasFunc(width=self.TM.tilesize**2,height=self.TM.tilesize**2,background="grey")
         self.TilePaletteCanvas.grid(row=4,column=0, columnspan=4, rowspan=2,sticky = tk.N+tk.W,padx=2,pady=2)
 
         self.TileSetPaletteBuilder()
@@ -185,18 +190,18 @@ class tile_painter():
 
         self.master.rowconfigure(4,weight=1)
         self.master.columnconfigure(5,weight=1)
-        self.TilePaintCanvas=self.CanvasFunc(width=256,height=256,background="grey")
+        self.TilePaintCanvas=self.CanvasFunc(width=self.TM.tilesize**2,height=self.TM.tilesize**2,background="grey")
         self.TilePaintCanvas.grid(row=4,column=5, columnspan=5, rowspan=5,sticky = tk.N+tk.S+tk.E+tk.W,padx=2,pady=2)
         self.TilePaintCanvas.configure(scrollregion = self.TilePaintCanvas.bbox("all"))
-        self.TilePaintCanvas.configure(yscrollincrement=16)
-        self.TilePaintCanvas.configure(xscrollincrement=16)
+        self.TilePaintCanvas.configure(yscrollincrement=self.TM.tilesize)
+        self.TilePaintCanvas.configure(xscrollincrement=self.TM.tilesize)
 
         #initialize grid pattern
         self.gridlines={}
-        self.prevXminmax=[0,256]
-        self.prevYminmax=[0,256]
+        self.prevXminmax=[0,self.TM.tilesize**2]
+        self.prevYminmax=[0,self.TM.tilesize**2]
         (x1,y1,x2,y2)=self.CanvasCoords()
-        self.CreateGrid(0,0,256,256)
+        self.CreateGrid(0,0,self.TM.tilesize**2,self.TM.tilesize**2)
 
         #self.CanvasTileManager(initialize=True)
 
@@ -259,7 +264,7 @@ class tile_painter():
         #yn+=deltay
 
         bboxraw=(xi,yi,xn+1,yn+1)
-        bboxpix=[i*16 for i in bboxraw]
+        bboxpix=[i*self.TM.tilesize for i in bboxraw]
 
 
         return [bboxraw,bboxpix]
@@ -305,7 +310,7 @@ class tile_painter():
 
         self.TPainStorage={}
 
-        self.TM.canvasmatrix=np.empty([16,16],dtype=object)
+        self.TM.canvasmatrix=np.empty([self.TM.tilesize,self.TM.tilesize],dtype=object)
         self.TM.memory=[0,0]
 
         self.TM.canvasmatrix,self.TM.memory=self.TM.tilepaintTool(canvasmatrix=self.TM.canvasmatrix,x=0,y=0,tilematrix=imagematrix,memory=self.TM.memory)
@@ -476,10 +481,10 @@ class tile_painter():
 
     def CursorLocation(self,event):
         '''
-        returns coordinates of cursor in widget in multiples of 16 pixels
+        returns coordinates of cursor in widget in multiples of self.TM.tilesize pixels
         '''
-        x=np.fix((event.x-2)/16)
-        y=np.fix((event.y-2)/16)
+        x=np.fix((event.x-2)/self.TM.tilesize)
+        y=np.fix((event.y-2)/self.TM.tilesize)
         return (x,y)
 
     def CanvasCoords(self):
@@ -499,14 +504,14 @@ class tile_painter():
 
     def CreateGrid(self,x1,y1,x2,y2):
         '''
-        creates 2 grids: 256x256 and 16x16
+        creates 2 grids: self.TM.tilesize**2xself.TM.tilesize**2 and self.TM.tilesizexself.TM.tilesize
         '''
         obj=self.TilePaintCanvas
 
-        largeXrange=range(x1,x2,256)
-        smallXrange=range(x1,x2,16)
-        largeYrange=range(y1,y2,256)
-        smallYrange=range(y1,y2,16)
+        largeXrange=range(x1,x2,self.TM.tilesize**2)
+        smallXrange=range(x1,x2,self.TM.tilesize)
+        largeYrange=range(y1,y2,self.TM.tilesize**2)
+        smallYrange=range(y1,y2,self.TM.tilesize)
 
         #create vertical lines:
         for i in smallXrange:
@@ -559,9 +564,9 @@ class tile_painter():
             self.TM.masterimgref=[(xc,yc),imgTk,masterimg]
 
             if mastercheck==0:
-                tilepaintimg=obj.create_image((xc*16,yc*16),image=imgTk,anchor=tk.NW,tags="master")
+                tilepaintimg=obj.create_image((xc*self.TM.tilesize,yc*self.TM.tilesize),image=imgTk,anchor=tk.NW,tags="master")
             else:
-                obj.coords("master",(xc*16,yc*16))
+                obj.coords("master",(xc*self.TM.tilesize,yc*self.TM.tilesize))
                 obj.itemconfig("master",image=imgTk)
 
             self.TPainStorage={}
@@ -576,9 +581,9 @@ class tile_painter():
             yc=self.TM.memory[0]
 
             if mastercheck==0:
-                tilepaintimg=obj.create_image((xc*16,yc*16),image=imgTk,anchor=tk.NW,tags="master")
+                tilepaintimg=obj.create_image((xc*self.TM.tilesize,yc*self.TM.tilesize),image=imgTk,anchor=tk.NW,tags="master")
             else:
-                obj.coords("master",(xc*16,yc*16))
+                obj.coords("master",(xc*self.TM.tilesize,yc*self.TM.tilesize))
                 obj.itemconfig("master",image=imgTk)
 
             self.TPainStorage={}
@@ -612,8 +617,8 @@ class tile_painter():
         Use only for canvas objects
         '''
 
-        x=np.floor((obj.canvasx(event.x))/16)
-        y=np.floor((obj.canvasy(event.y))/16)
+        x=np.floor((obj.canvasx(event.x))/self.TM.tilesize)
+        y=np.floor((obj.canvasy(event.y))/self.TM.tilesize)
         #[x,y]=self.CursorLocation(event)
 
         coords=[(x,y),(x,y)] #single location coords
@@ -624,6 +629,7 @@ class tile_painter():
 
         coords1=[(x,y),(x+xm-1,y+ym-1)] #multitile location coords
         bbox1=self.CursorRectangle(coords1)[1]
+        pixcoord=bbox1[0:2]
 
         if str(event.type)=="Enter":
             '''
@@ -635,9 +641,12 @@ class tile_painter():
 
             #Tile placement preview
             if canvasid:
-                color1="red"
-                Cursor1=obj.create_rectangle(bbox1,outline=color1,width=2,tags="Cursor2")
-                obj.tag_raise("Cursor2")
+                tp_pil=self.TM.createtilepreview()
+                tp_pil.putalpha(100)
+                self.tpTk=PIL_ImageTk.PhotoImage(image=tp_pil)
+                imgtag="preview"
+                tilepreview=obj.create_image(pixcoord,image=self.tpTk,anchor=tk.NW,tags=imgtag)
+                obj.coords("Cursor0",bbox1)
 
 
         if str(event.type)=="Leave":
@@ -646,7 +655,7 @@ class tile_painter():
             '''
             try:
                 obj.delete("Cursor0")
-                obj.delete("Cursor2")
+                obj.delete("preview")
             except:
                 pass
 
@@ -654,12 +663,19 @@ class tile_painter():
             '''
             Move cursor
             '''
-            obj.coords("Cursor0",bbox0)
+
             obj.tag_raise("Cursor0")
 
             if canvasid:
-                obj.coords("Cursor2",bbox1)
-                obj.tag_raise("Cursor2")
+                obj.coords("Cursor0",bbox1)
+                obj.coords("preview",pixcoord)
+                obj.tag_raise("preview")
+
+            else:
+                obj.coords("Cursor0",bbox0)
+
+
+
 
 
     def BindTilePaletteControl(self):
@@ -681,8 +697,8 @@ class tile_painter():
             Change selected tile
             '''
 
-            x=np.floor((obj.canvasx(event.x))/16)
-            y=np.floor((obj.canvasy(event.y))/16)
+            x=np.floor((obj.canvasx(event.x))/self.TM.tilesize)
+            y=np.floor((obj.canvasy(event.y))/self.TM.tilesize)
             #(x,y)=self.CursorLocation(event)
 
             coords=[(x,y),(x,y)] #single location coords
@@ -698,8 +714,8 @@ class tile_painter():
 
         if controltype=="drag":
 
-            x=np.floor((obj.canvasx(event.x))/16)
-            y=np.floor((obj.canvasy(event.y))/16)
+            x=np.floor((obj.canvasx(event.x))/self.TM.tilesize)
+            y=np.floor((obj.canvasy(event.y))/self.TM.tilesize)
             #(x,y)=self.CursorLocation(event)
 
             self.CursorCoordList.append((x,y))
@@ -753,8 +769,8 @@ class tile_painter():
 
         tilelist=obj.find_withtag("tiles")
 
-        x=np.floor((obj.canvasx(event.x))/16)
-        y=np.floor((obj.canvasy(event.y))/16)
+        x=np.floor((obj.canvasx(event.x))/self.TM.tilesize)
+        y=np.floor((obj.canvasy(event.y))/self.TM.tilesize)
 
         #(x,y)=self.CursorLocation(event)
 
@@ -788,7 +804,7 @@ class tile_painter():
                     tilecheck=len(obj.find_withtag(imgtag))
 
                     if tilecheck==0:
-                        tilepaintimg=obj.create_image((xt*16,yt*16),image=imgTk,anchor=tk.NW,tags=("tiles",imgtag))
+                        tilepaintimg=obj.create_image((xt*self.TM.tilesize,yt*self.TM.tilesize),image=imgTk,anchor=tk.NW,tags=("tiles",imgtag))
 
                     else:
                         obj.itemconfig(imgtag,image=imgTk)
@@ -845,7 +861,7 @@ class tile_painter():
 
 
                         if tilecheck==0:
-                            tilepaintimg=obj.create_image((xt*16,yt*16),image=imgTk,anchor=tk.NW,tags=("tiles",imgtag))
+                            tilepaintimg=obj.create_image((xt*self.TM.tilesize,yt*self.TM.tilesize),image=imgTk,anchor=tk.NW,tags=("tiles",imgtag))
 
                         else:
                             obj.itemconfig(imgtag,image=imgTk)
@@ -871,14 +887,14 @@ class tile_painter():
         clears selected tiles
         '''
         obj=self.TilePaintCanvas
-        x=np.floor((obj.canvasx(event.x))/16)
-        y=np.floor((obj.canvasy(event.y))/16)
+        x=np.floor((obj.canvasx(event.x))/self.TM.tilesize)
+        y=np.floor((obj.canvasy(event.y))/self.TM.tilesize)
         #(x,y)=self.CursorLocation(event)
         value=(y,x)
 
         imgtag=f'({x},{y})'
 
-        blankimg=PIL_Image.new('RGBA',(16,16),(127, 127, 127, 255)) #matches current grey of background
+        blankimg=PIL_Image.new('RGBA',(self.TM.tilesize,self.TM.tilesize),(127, 127, 127, 255)) #matches current grey of background
         imgTk=PIL_ImageTk.PhotoImage(image=blankimg)
 
         self.TPainStorage[imgtag]=[(x,y),imgTk,None]
@@ -886,7 +902,7 @@ class tile_painter():
         tilecheck=len(obj.find_withtag(imgtag))
 
         if tilecheck==0:
-            tilepaintimg=obj.create_image((x*16,y*16),image=imgTk,anchor=tk.NW,tags=("tiles",imgtag))
+            tilepaintimg=obj.create_image((x*self.TM.tilesize,y*self.TM.tilesize),image=imgTk,anchor=tk.NW,tags=("tiles",imgtag))
         else:
             obj.itemconfig(imgtag,image=imgTk)
 

@@ -15,6 +15,8 @@ class MasterTilesetManager():
 
         self.mastertilesetpath=os.path.join(self.FFP.tilesetpath,"MasterTileset.png")
 
+        self.tilesize=16
+
 
     def createMaster(self):
         '''
@@ -35,16 +37,16 @@ class MasterTilesetManager():
                 filename=os.path.join(folder,f"area{i}.png")
                 img=cv2.cvtColor(cv2.imread(filename), cv2.COLOR_BGR2RGB)
 
-                row=int(img.shape[0]/16)
-                col=int(img.shape[1]/16)
+                row=int(img.shape[0]/self.tilesize)
+                col=int(img.shape[1]/self.tilesize)
 
 
                 MainMatrix=np.empty(((row),(col)),dtype=object)
                 for x,row in enumerate(MainMatrix):
                     for y,val in enumerate(row):
-                        m=x*16
-                        n=y*16
-                        MainMatrix[x,y]=img[m:m+16, n:n+16,:]
+                        m=x*self.tilesize
+                        n=y*self.tilesize
+                        MainMatrix[x,y]=img[m:m+self.tilesize, n:n+self.tilesize,:]
 
                 matrixlst.append(MainMatrix)
 
@@ -54,8 +56,8 @@ class MasterTilesetManager():
         xmax=max([len(x) for x in tilesetmatrixlst.values()])
         ymax=max(tilesetmatrixlst.keys())
 
-        row=(ymax+1)*16
-        col=(xmax)*16
+        row=(ymax+1)*self.tilesize
+        col=(xmax)*self.tilesize
 
         MasterMatrix=np.empty(((row),(col)),dtype=object)
 
@@ -65,16 +67,16 @@ class MasterTilesetManager():
                     for suby,val in enumerate(row):
 
                         '''
-                        typeid=np.floor(x/16)
-                        areaid=np.floor(y/16)
-                        subx=x-typeid*16
-                        suby=y-areaid*16
-                        m=int(16*subx+typeid*256)
-                        n=int(16*suby+areaid*256)
+                        typeid=np.floor(x/self.tilesize)
+                        areaid=np.floor(y/self.tilesize)
+                        subx=x-typeid*self.tilesize
+                        suby=y-areaid*self.tilesize
+                        m=int(self.tilesize*subx+typeid*256)
+                        n=int(self.tilesize*suby+areaid*256)
                         '''
 
-                        x=subx+typeid*16
-                        y=suby+areaid*16
+                        x=subx+typeid*self.tilesize
+                        y=suby+areaid*self.tilesize
 
                         #print(x,y)
 

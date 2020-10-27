@@ -25,8 +25,10 @@ class Tile_Manager():
         self.subx=[0,0]
         self.suby=[0,0]
 
+        self.tilesize=self.MTM.tilesize
+
         #Matrix Variables
-        self.canvasmatrix=np.empty([16,16],dtype=object)
+        self.canvasmatrix=np.empty([self.tilesize,self.tilesize],dtype=object)
         self.memory=[0,0]
 
         #Master Image
@@ -36,14 +38,17 @@ class Tile_Manager():
         self.masterimgref=[(0,0),imgTk,masterimg]
 
 
+
+
+
     def gettile(self):
         '''
         given main and sub coords, return tile img
         '''
 
         #convert main and sub coords to index
-        x=self.subx+self.typeid*16
-        y=self.suby+self.areaid*16
+        x=self.subx+self.typeid*self.tilesize
+        y=self.suby+self.areaid*self.tilesize
 
         img=self.MasterMatrix[x,y]
 
@@ -80,8 +85,8 @@ class Tile_Manager():
         selectmatrix=np.empty(((deltax),(deltay)),dtype=object)
         for x,row in enumerate(selectmatrix):
             for y,val in enumerate(row):
-                m=int(x+subxrange[0])+self.typeid*16
-                n=int(y+subyrange[0])+self.areaid*16
+                m=int(x+subxrange[0])+self.typeid*self.tilesize
+                n=int(y+subyrange[0])+self.areaid*self.tilesize
                 selectmatrix[x,y]=self.MasterMatrix[m,n]
 
         return selectmatrix
@@ -204,12 +209,12 @@ class Tile_Manager():
         '''
         used to take tiles from matrix and return as single image.
         '''
-        xmax=int((np.shape(matrix)[0])*16)
-        ymax=int((np.shape(matrix)[1])*16)
+        xmax=int((np.shape(matrix)[0])*self.tilesize)
+        ymax=int((np.shape(matrix)[1])*self.tilesize)
 
         # stitch tiles together and export as png image
         dst=PIL_Image.new('RGBA',(ymax,xmax),(0, 0, 0, 0))
-        blankimg=PIL_Image.new('RGBA',(16,16),(0, 0, 0, 0))
+        blankimg=PIL_Image.new('RGBA',(self.tilesize,self.tilesize),(0, 0, 0, 0))
 
         for x,row in enumerate(matrix):
             for y,val in enumerate(row):
@@ -218,8 +223,8 @@ class Tile_Manager():
                 else:
                     im_pil = PIL_Image.fromarray(val)
 
-                xc=x*16
-                yc=y*16
+                xc=x*self.tilesize
+                yc=y*self.tilesize
 
                 dst.paste(im_pil,(yc,xc))
 
@@ -239,9 +244,9 @@ class Tile_Manager():
         #open image in normal colors
         img=cv2.cvtColor(cv2.imread(imagepath,cv2.IMREAD_UNCHANGED), cv2.COLOR_BGR2RGBA)
 
-        #create image matrix (paste into larger matrix if smaller than 16x16)
-        row=int(img.shape[0]/16)
-        col=int(img.shape[1]/16)
+        #create image matrix (paste into larger matrix if smaller than self.tilesizexself.tilesize)
+        row=int(img.shape[0]/self.tilesize)
+        col=int(img.shape[1]/self.tilesize)
 
         rown=row
         coln=col
@@ -250,17 +255,17 @@ class Tile_Manager():
 
         for x,row in enumerate(ImageMatrix):
             for y,val in enumerate(row):
-                m=x*16
-                n=y*16
-                ImageMatrix[x,y]=img[m:m+16, n:n+16,:]
+                m=x*self.tilesize
+                n=y*self.tilesize
+                ImageMatrix[x,y]=img[m:m+self.tilesize, n:n+self.tilesize,:]
 
-        if rown<16 or coln<16:
-            if rown<16:
+        if rown<self.tilesize or coln<self.tilesize:
+            if rown<self.tilesize:
                 row=rown
-                rown=16
-            if coln<16:
+                rown=self.tilesize
+            if coln<self.tilesize:
                 col=coln
-                coln=16
+                coln=self.tilesize
 
             ImageMatrixT=np.empty(((rown),(coln)),dtype=object)
             ImageMatrixT[0:row,0:col]=ImageMatrix
@@ -290,22 +295,22 @@ class Tile_Manager():
 
         (yc,xc)=self.memory #coord adjustment
 
-        xmax=int((np.shape(self.canvasmatrix)[0])*16)
-        ymax=int((np.shape(self.canvasmatrix)[1])*16)
+        xmax=int((np.shape(self.canvasmatrix)[0])*self.tilesize)
+        ymax=int((np.shape(self.canvasmatrix)[1])*self.tilesize)
 
         newmaster=PIL_Image.new('RGBA',(ymax,xmax),(0, 0, 0, 0))
 
-        (xp,yp)=((xi-xc)*16,(yi-yc)*16) # prev master to new paste coordinates
+        (xp,yp)=((xi-xc)*self.tilesize,(yi-yc)*self.tilesize) # prev master to new paste coordinates
 
         newmaster.paste(mstrimg,(xp,yp))
 
-        blankimg=PIL_Image.new('RGBA',(16,16),(0, 0, 0, 0))
+        blankimg=PIL_Image.new('RGBA',(self.tilesize,self.tilesize),(0, 0, 0, 0))
 
         for tile in TileList:
 
             (xf,yf)=tile[0]
 
-            (x,y)=(int((xf-xc)*16),int((yf-yc)*16))
+            (x,y)=(int((xf-xc)*self.tilesize),int((yf-yc)*self.tilesize))
 
             im_pil=tile[2]
             if im_pil is not None:
@@ -318,4 +323,8 @@ class Tile_Manager():
         imgTk=PIL_ImageTk.PhotoImage(image=masterimg)
         self.masterimgref=[(xc,yc),imgTk,masterimg]
 
-        
+    def createtilepreview(self):
+        '''
+        generates half alpha image of current selected tiles
+        '''
+        return self.imagestitchTool(matrix=self.MultitileTool())
