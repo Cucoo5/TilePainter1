@@ -3,7 +3,7 @@
  False,
  False,
  True,
- None,
+ 'TilePainter.ico',
  None,
  False,
  False,
@@ -64,7 +64,7 @@
  [],
  False,
  False,
- 1603845183,
+ 1603850340,
  [('runw.exe',
    'C:\\Users\\mwyoo\\AppData\\Local\\Programs\\Python\\Python38-32\\lib\\site-packages\\PyInstaller\\bootloader\\Windows-32bit\\runw.exe',
    'EXECUTABLE')])

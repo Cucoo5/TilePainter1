@@ -13,6 +13,8 @@ def main():
     master = tk.Tk()
     master.title("TilePainter")
     TM=Tile_Manager()
+    iconpath=os.path.join(TM.FFP.UIpath,"TilePainter.ico")
+    master.iconbitmap(iconpath)
     tp=tile_painter(master,TM)
     master.mainloop()
 
